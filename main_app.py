@@ -3,7 +3,7 @@ import whisper
 from io import BytesIO
 
 # Load Whisper model
-model = whisper.load_model("large")
+model = whisper.load_model("base")
 
 # Streamlit app
 st.title("Audio to Text Transcription")
