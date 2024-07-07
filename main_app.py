@@ -20,11 +20,11 @@ def convert_to_audio(video_path, audio_path):
     video_clip.close()
 
 # Function to transcribe audio to text
-def transcribe_audio(audio_path, model_size="large"):
-    if torch.cuda.is_available():
-        device = "cuda"
-    else:
-        device = "cpu"
+def transcribe_audio(audio_path, model_size="base"):
+    device = "cuda"
+    # if torch.cuda.is_available():
+    # else:
+        # device = "cpu"
     
     model = whisper.load_model(model_size, device=device)
     result = model.transcribe(audio_path)
