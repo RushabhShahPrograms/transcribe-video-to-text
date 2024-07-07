@@ -1,10 +1,9 @@
 import streamlit as st
 from pytube import YouTube
-import subprocess
 import os
 import whisper
-from moviepy.editor import VideoFileClip
 import torch
+import ffmpeg
 
 # Function to download YouTube video
 def download_youtube_video(url, download_path):
@@ -13,19 +12,15 @@ def download_youtube_video(url, download_path):
     video_path = stream.download(download_path)
     return video_path, yt.title, yt.thumbnail_url
 
-# Function to convert video to audio
+# Function to convert video to audio using ffmpeg-python
 def convert_to_audio(video_path, audio_path):
-    video_clip = VideoFileClip(video_path)
-    video_clip.audio.write_audiofile(audio_path)
-    video_clip.close()
+    stream = ffmpeg.input(video_path)
+    stream = ffmpeg.output(stream, audio_path, acodec='libmp3lame', ab='192k', ar='44100')
+    ffmpeg.run(stream, overwrite_output=True)
 
 # Function to transcribe audio to text
 def transcribe_audio(audio_path, model_size="base"):
-    if torch.cuda.is_available():
-        device = "cuda"
-    else:
-        device = "cpu"
-    
+    device = "cuda" if torch.cuda.is_available() else "cpu"
     model = whisper.load_model(model_size, device=device)
     result = model.transcribe(audio_path)
     return result["text"]
