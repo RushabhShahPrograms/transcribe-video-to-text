@@ -5,7 +5,7 @@ import os
 import tempfile
 
 # Load Whisper model
-@st.cache_resource
+@st.cache(allow_output_mutation=True)
 def load_model():
     return whisper.load_model("tiny")
 
@@ -28,7 +28,7 @@ if uploaded_file is not None and not st.session_state.transcribed:
         try:
             # Save the uploaded file temporarily
             with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(uploaded_file.name)[1]) as temp_audio:
-                temp_audio.write(uploaded_file.getvalue())
+                temp_audio.write(uploaded_file.getbuffer())
                 temp_audio_path = temp_audio.name
 
             # Transcribe audio using Whisper
