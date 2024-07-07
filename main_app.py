@@ -1,6 +1,6 @@
 import streamlit as st
 import yt_dlp
-import openai_whisper
+import whisper
 import os
 from io import BytesIO
 
@@ -27,7 +27,7 @@ def download_audio(url):
 
 # Function to transcribe audio using Whisper
 def transcribe_audio(file_path):
-    model = openai_whisper.load_model("base")
+    model = whisper.load_model("base")
     result = model.transcribe(file_path)
     return result["text"]
 
