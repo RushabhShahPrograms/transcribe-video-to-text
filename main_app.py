@@ -7,7 +7,7 @@ import tempfile
 # Load Whisper model
 @st.cache_resource
 def load_model():
-    return whisper.load_model("tiny")
+    return whisper.load_model("tiny",device="cpu", precision="float32")
 
 model = load_model()
 
