@@ -1,19 +1,10 @@
 import streamlit as st
 import yt_dlp
-import whisper
+import openai_whisper
 import os
-import torch
+from io import BytesIO
 
-# Check if CUDA is available
-device = "cuda" if torch.cuda.is_available() else "cpu"
-
-# Load Whisper model
-@st.cache_resource
-def load_whisper_model():
-    return whisper.load_model("large").to(device)
-
-model = load_whisper_model()
-
+# Function to download audio from YouTube video
 def download_audio(url):
     ydl_opts = {
         'format': 'bestaudio/best',
@@ -22,45 +13,48 @@ def download_audio(url):
             'preferredcodec': 'mp3',
             'preferredquality': '192',
         }],
-        'outtmpl': 'audio.%(ext)s'
+        'outtmpl': '%(id)s.%(ext)s',
+        'noplaylist': True,
+        'quiet': True,
     }
     
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        info_dict = ydl.extract_info(url, download=False)
+        video_id = info_dict.get("id", None)
+        filename = ydl.prepare_filename(info_dict).replace('.webm', '.mp3').replace('.m4a', '.mp3')
         ydl.download([url])
+        return filename
 
-def transcribe_audio():
-    result = model.transcribe("audio.mp3")
+# Function to transcribe audio using Whisper
+def transcribe_audio(file_path):
+    model = openai_whisper.load_model("base")
+    result = model.transcribe(file_path)
     return result["text"]
 
-def main():
-    st.title("YouTube Video Transcription App")
+# Streamlit app
+st.title("YouTube Video Transcription")
 
-    url = st.text_input("Enter YouTube video URL:")
+# Input YouTube URL
+youtube_url = st.text_input("Enter YouTube video URL:")
 
+if youtube_url:
     if st.button("Transcribe"):
-        if url:
-            with st.spinner("Downloading audio..."):
-                download_audio(url)
-            
+        with st.spinner("Downloading audio..."):
+            audio_file = download_audio(youtube_url)
+        
+        if audio_file:
             with st.spinner("Transcribing audio..."):
-                transcription = transcribe_audio()
+                transcription = transcribe_audio(audio_file)
             
-            st.success("Transcription complete!")
+            st.success("Transcription completed!")
             
-            # Create a download button for the transcription
-            st.download_button(
-                label="Download Transcription",
-                data=transcription,
-                file_name="transcription.txt",
-                mime="text/plain"
-            )
-
-            # Clean up
-            if os.path.exists("audio.mp3"):
-                os.remove("audio.mp3")
-
-        else:
-            st.warning("Please enter a valid YouTube URL.")
-
-if __name__ == "__main__":
-    main()
+            # Display transcription
+            st.text_area("Transcription:", transcription, height=300)
+            
+            # Provide download link for the transcription
+            b = BytesIO(transcription.encode())
+            b.name = "transcription.txt"
+            st.download_button(label="Download Transcription", data=b, file_name="transcription.txt", mime="text/plain")
+            
+            # Clean up downloaded audio file
+            os.remove(audio_file)
