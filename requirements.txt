@@ -1,0 +1,8 @@
+pytube
+ffmpeg-python
+openai-whisper
+streamlit
+yt-dlp
+torch
+moviepy
+numpy==1.24.0
